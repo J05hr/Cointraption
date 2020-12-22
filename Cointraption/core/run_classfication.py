@@ -16,15 +16,15 @@ def run(settings):
     out_dict = {'h': 'hold', 's': 'sell', 'b': 'buy'}
 
     # get feature and outcomes data as a FeatureVectors object
-    allfvs = featex.formatdata(filename, moving_avg_days, decision_range)
+    fvs = featex.formatdata(filename, moving_avg_days, decision_range)
 
     # get the total number of data points minus the last
-    dcnt = len(allfvs.featurelist) - 1
+    dcnt = len(fvs.featurelist) - 1
 
     splitidx = math.ceil(dcnt * (train_percent/100))  # calc the split index
     # split the data
-    trainfvs = FeatureVectors(allfvs.rawlist[:splitidx], allfvs.perclist[:splitidx], allfvs.avglist[:splitidx], allfvs.featurelist[:splitidx], allfvs.outcomes[:splitidx])
-    testfvs = FeatureVectors(allfvs.rawlist[splitidx:], allfvs.perclist[splitidx:], allfvs.avglist[splitidx:], allfvs.featurelist[splitidx:], allfvs.outcomes[splitidx:])
+    trainfvs = FeatureVectors(fvs.rawlist[:splitidx], fvs.perclist[:splitidx], fvs.avglist[:splitidx], fvs.featurelist[:splitidx], fvs.outcomes[:splitidx])
+    testfvs = FeatureVectors(fvs.rawlist[splitidx:], fvs.perclist[splitidx:], fvs.avglist[splitidx:], fvs.featurelist[splitidx:], fvs.outcomes[splitidx:])
 
     # figure out some basic training variables
     traindcnt = len(trainfvs.featurelist)  # num of features
