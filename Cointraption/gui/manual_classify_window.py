@@ -3,68 +3,70 @@ from pathlib import Path
 from PyQt5.QtWidgets import *
 from Cointraption.gui import results_dialog
 from Cointraption.core import run_classfication
+from Cointraption.objs.settings import Settings
 
 
-reldir = str(Path.cwd())
-baseDataDir = '\\data'
-FormClass, BaseClass = uic.loadUiType(reldir + '\\layouts\\manual_classify_window.ui')
+rel_dir = str(Path.cwd())
+base_data_dir = '\\data'
+FormClass, BaseClass = uic.loadUiType(rel_dir + '\\layouts\\manual_classify_window.ui')
 
 
 class ManualCWindow(BaseClass, FormClass):
     def __init__(self):
         super(ManualCWindow, self).__init__()
-        self.browseDialog = None
-        self.resultsDialog = None
-        self.dataFname = None
-        self.trainingData = None
-        self.testingData = None
-        self.trainingModel = None
+        self.browse_dialog = None
+        self.results_dialog = None
+        self.data_filename = None
+        self.training_data = None
+        self.testing_data = None
+        self.training_model = None
         self.setupUi(self)
 
-        self.curDirLabel = self.findChild(QLabel, 'curDirLabel')
-        self.curDirLabel.setText('\\..' + baseDataDir)
+        self.current_dir_label = self.findChild(QLabel, 'curDirLabel')
+        self.current_dir_label.setText('\\..' + base_data_dir)
 
-        self.trainPercentSpin = self.findChild(QSpinBox, 'trainPercentSpin')
-        self.sellBelowSpin = self.findChild(QDoubleSpinBox, 'sellBelowSpin')
-        self.buyAboveSpin = self.findChild(QDoubleSpinBox, 'buyAboveSpin')
-        self.movingAvgSpin = self.findChild(QSpinBox, 'movingAvgSpin')
+        self.train_percent_spin = self.findChild(QSpinBox, 'trainPercentSpin')
+        self.sell_below_spin = self.findChild(QDoubleSpinBox, 'sellBelowSpin')
+        self.buy_above_spin = self.findChild(QDoubleSpinBox, 'buyAboveSpin')
+        self.moving_avg_spin = self.findChild(QSpinBox, 'movingAvgSpin')
 
-        self.browseButton = self.findChild(QPushButton, 'browseButton')
-        self.browseButton.clicked.connect(self.browseButtonCallBack)
+        self.browse_button = self.findChild(QPushButton, 'browseButton')
+        self.browse_button.clicked.connect(self.browse_button_cb)
 
-        self.runCButton = self.findChild(QPushButton, 'runCButton')
-        self.runCButton.clicked.connect(self.runCButtonCallBack)
+        self.run_c_button = self.findChild(QPushButton, 'runCButton')
+        self.run_c_button.clicked.connect(self.run_c_button_cb)
 
-        self.dataListWidget = self.findChild(QListWidget, 'dataListWidget')
-        self.dataListWidget.clicked.connect(self.dataSelectedCallBack)
-        self.dataDir = reldir + baseDataDir
-        self.updateListView()
+        self.data_list_widget = self.findChild(QListWidget, 'dataListWidget')
+        self.data_list_widget.clicked.connect(self.data_selected_cb)
+        self.data_dir = rel_dir + base_data_dir
+        self.update_list_view()
 
-    def updateListView(self):
-        if self.dataDir:
-            pobj = Path(self.dataDir)
+    def update_list_view(self):
+        if self.data_dir:
+            pobj = Path(self.data_dir)
             for fname in pobj.iterdir():
-                self.dataListWidget.addItem(str(fname.name))
+                self.data_list_widget.addItem(str(fname.name))
 
-    def browseButtonCallBack(self):
-        self.dataListWidget.clear()
-        self.browseDialog = QFileDialog()
-        self.dataDir = self.browseDialog.getExistingDirectory(self, "Choose Data Directory", self.dataDir, self.browseDialog.ShowDirsOnly)
-        self.updateListView()
+    def browse_button_cb(self):
+        self.data_list_widget.clear()
+        self.browse_dialog = QFileDialog()
+        self.data_dir = self.browse_dialog.getExistingDirectory(self, "Choose Data Directory", self.data_dir, self.browse_dialog.ShowDirsOnly)
+        self.update_list_view()
 
-    def runCButtonCallBack(self):
-        self.runCButton.setEnabled(False)
-        self.runCButton.setText("Running...")
-        outcomeRange = (-1 * self.sellBelowSpin.value(), self.buyAboveSpin.value())
-        res = run_classfication.run(self.dataFname, self.movingAvgSpin.value(), outcomeRange, self.trainPercentSpin.value())
-        self.resultsDialog = results_dialog.ResultsDialog(res)
-        self.resultsDialog.show()
-        self.resultsDialog.finished.connect(self.resultsDialogFinishedCallback)
+    def run_c_button_cb(self):
+        self.run_c_button.setEnabled(False)
+        self.run_c_button.setText("Running...")
+        outcome_range = (-1 * self.sell_below_spin.value(), self.buy_above_spin.value())
+        settings = Settings(self.data_filename, self.moving_avg_spin.value(), outcome_range, self.train_percent_spin.value())
+        res = run_classfication.run(settings)
+        self.results_dialog = results_dialog.ResultsDialog(res)
+        self.results_dialog.show()
+        self.results_dialog.finished.connect(self.results_dialog_finished_cb)
 
-    def resultsDialogFinishedCallback(self):
-        self.runCButton.setEnabled(True)
-        self.runCButton.setText("Run Classification")
+    def results_dialog_finished_cb(self):
+        self.run_c_button.setEnabled(True)
+        self.run_c_button.setText("Run Classification")
 
-    def dataSelectedCallBack(self):
-        self.dataFname = self.dataDir + '\\' + self.dataListWidget.selectedItems()[0].text()
-        self.runCButton.setEnabled(True)
+    def data_selected_cb(self):
+        self.data_filename = self.data_dir + '\\' + self.data_list_widget.selectedItems()[0].text()
+        self.run_c_button.setEnabled(True)

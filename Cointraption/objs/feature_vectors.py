@@ -2,10 +2,10 @@
 
 class FeatureVectors:
 
-    def __init__(self, rawlist, perclist, avglist, featurelist, outcomes):
+    def __init__(self, raw, perc_data, avg_data, feature_data, outcomes):
 
-        self.rawlist = rawlist  # raw data in a list of tuples
-        self.perclist = perclist  # percent change day to day
-        self.avglist = avglist  # moving avg list
-        self.featurelist = featurelist  # moving average then transformed to percent change day to day
-        self.outcomes = outcomes  # array of buy, sell, or hold
+        self.raw_data = raw  # raw data in a pandas data frame
+        self.perc_data = perc_data  # raw is transformed to percent change feature over feature
+        self.avg_data = avg_data  # raw is transformed to be a predefined moving average feature over feature
+        self.feature_data = feature_data  # the final feature vectors
+        self.outcomes = outcomes  # list of predefined outcomes buy, sell, or hold

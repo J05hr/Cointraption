@@ -5,16 +5,24 @@ import Cointraption.core.bayes_classifier as nbayes
 import math
 
 
-def run(filename, movingavgdays, outcomebasis, trainPercent):
-    classificationList = []
-    finalPrediction = []
-    outdict = {'h': 'hold', 's': 'sell', 'b': 'buy'}
+def run(settings):
+    filename = settings.classification_parameters["filename"]
+    moving_avg_days = settings.classification_parameters["moving_avg_days"]
+    decision_range = settings.classification_parameters["decision_range"]
+    train_percent = settings.classification_parameters["train_percent"]
+
+    classification_list = []
+    final_prediction = []
+    out_dict = {'h': 'hold', 's': 'sell', 'b': 'buy'}
+
     # get feature and outcomes data as a FeatureVectors object
-    allfvs = featex.formatdata(filename, movingavgdays, outcomebasis)
+    allfvs = featex.formatdata(filename, moving_avg_days, decision_range)
+
     # get the total number of data points minus the last
     dcnt = len(allfvs.featurelist) - 1
-    splitidx = math.ceil(dcnt * (trainPercent/100))
-    # 90%/10% training/testing split
+
+    splitidx = math.ceil(dcnt * (train_percent/100))  # calc the split index
+    # split the data
     trainfvs = FeatureVectors(allfvs.rawlist[:splitidx], allfvs.perclist[:splitidx], allfvs.avglist[:splitidx], allfvs.featurelist[:splitidx], allfvs.outcomes[:splitidx])
     testfvs = FeatureVectors(allfvs.rawlist[splitidx:], allfvs.perclist[splitidx:], allfvs.avglist[splitidx:], allfvs.featurelist[splitidx:], allfvs.outcomes[splitidx:])
 
@@ -72,17 +80,17 @@ def run(filename, movingavgdays, outcomebasis, trainPercent):
             pout = 'hold'
         # check if the test prediction was accurate and print
         testString = ""
-        if outdict[testfvs.outcomes[fvidx][1]] == pout:
+        if out_dict[testfvs.outcomes[fvidx][1]] == pout:
             correctcnt += 1
-            testString = "Correct | Outcome: " + outdict[testfvs.outcomes[fvidx][1]] + " | Prediction: " + pout
+            testString = "Correct | Outcome: " + out_dict[testfvs.outcomes[fvidx][1]] + " | Prediction: " + pout
         else:
-            testString = "Incorrect | Outcome: " + outdict[testfvs.outcomes[fvidx][1]] + " | Prediction: " + pout
+            testString = "Incorrect | Outcome: " + out_dict[testfvs.outcomes[fvidx][1]] + " | Prediction: " + pout
         print(testString)
         cresults.append(testString)
         percnextdayclose = testfvs.perclist[fvidx+1][4]
         nextdayprofit = monin * (percnextdayclose/100)
         monin += nextdayprofit
-        classificationList.append(cresults)
+        classification_list.append(cresults)
 
     # print the accuracy of the classification at the end of testing
     accur = (correctcnt / (len(testfvs.featurelist)-1)) * 100
@@ -94,10 +102,10 @@ def run(filename, movingavgdays, outcomebasis, trainPercent):
     # take the most recent feature and run the model to predict the unknown decision
     lastvector = testfvs.featurelist[-1]
     ev = nbayes.getevidence(lastvector, trainfvs.featurelist, traindcnt)
-    finalPrediction = nbayes.classify(lastvector, td, ev, bprior, sprior, hprior)
+    final_prediction = nbayes.classify(lastvector, td, ev, bprior, sprior, hprior)
     print("\nfinal prediction for the unknown (last day)")
     print("    p(buy|data)       |     p(sell|data)    |    p(hold|data)")
-    print(str(finalPrediction) + "\n")
+    print(str(final_prediction) + "\n")
 
     # control is holding the full buy-in for the entire training range.
     first = testfvs.rawlist[0][4]
@@ -105,5 +113,5 @@ def run(filename, movingavgdays, outcomebasis, trainPercent):
     control = buyin * (last / first)
     profitOverControl = profit - control
 
-    return Results(outcomebasis, trainPercent, movingavgdays, accur, profit, buyin, profitOverControl,
-                   classificationList, finalPrediction)
+    return Results(decision_range, train_percent, moving_avg_days, accur, profit, buyin, profitOverControl,
+                   classification_list, final_prediction)
