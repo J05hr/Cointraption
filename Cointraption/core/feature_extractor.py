@@ -22,11 +22,16 @@ def formatdata(filename, moving_avg_days, decision_range):
         for idx, row in raw_data.iterrows():
             for col in raw_data.columns[3:11]:
                 if idx == 0:
-                    perc_data.iloc[idx][col] = 0
+                    perc_data.loc[idx, col] = 0
                 elif idx >= 1:
-                    ratio = raw_data.iloc[idx][col] / (raw_data.iloc[idx][col] - raw_data.iloc[idx - 1][col])
-                    perc = ratio * 100
-                    perc_data.iloc[idx][col] = perc
+                    change = raw_data.loc[idx, col] - raw_data.loc[idx - 1, col]
+                    current = raw_data.loc[idx, col]
+                    if change != 0 and current != 0:
+                        ratio = change / current
+                        perc = ratio * 100
+                    else:
+                        perc = 0
+                    perc_data.loc[idx, col] = perc
 
         # actions based on close to close delta, the decision range is defined by the setting decision_range
         # if the next day close is more than +x% then today was a buy

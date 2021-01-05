@@ -25,6 +25,7 @@ class ManualCWindow(BaseClass, FormClass):
         self.current_dir_label = self.findChild(QLabel, 'curDirLabel')
         self.current_dir_label.setText('\\..' + base_data_dir)
 
+        self.c_algo_combo = self.findChild(QComboBox, 'cAlgoComboBox')
         self.train_percent_spin = self.findChild(QSpinBox, 'trainPercentSpin')
         self.sell_below_spin = self.findChild(QDoubleSpinBox, 'sellBelowSpin')
         self.buy_above_spin = self.findChild(QDoubleSpinBox, 'buyAboveSpin')
@@ -57,7 +58,8 @@ class ManualCWindow(BaseClass, FormClass):
         self.run_c_button.setEnabled(False)
         self.run_c_button.setText("Running...")
         outcome_range = (-1 * self.sell_below_spin.value(), self.buy_above_spin.value())
-        settings = Settings(self.data_filename, self.moving_avg_spin.value(), outcome_range, self.train_percent_spin.value())
+        settings = Settings(self.data_filename, self.moving_avg_spin.value(), outcome_range,
+                            self.train_percent_spin.value(), self.c_algo_combo.value())
         res = run_classfication.run(settings)
         self.results_dialog = results_dialog.ResultsDialog(res)
         self.results_dialog.show()
