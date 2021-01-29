@@ -1,84 +1,84 @@
 from Cointraption.objs.bayes_data import BayesData
 
 
-def train(trainingfvs, outcomes, bcount, scount,  hcount):
+def train(training_fvs, outcomes, b_count, s_count, h_count):
     # initialize
-    numfeats = 6
-    td = BayesData(numfeats)
+    num_feats = 6
+    td = BayesData(num_feats)
 
     # traverse the training outcomes and the training vectors at the same time and record data into td
-    for idx in range(len(trainingfvs)):
+    for idx in range(len(training_fvs)):
         # choose the right outcome to record data for
-        if outcomes[idx][1] == 'b':  # use td.pbuys
-            for dctidx in range(1, numfeats):
-                dct = td.pbuys[dctidx]
-                featvalue = trainingfvs[idx][dctidx]
+        if outcomes[idx][1] == 'b':  # use td.p_buys
+            for dct_idx in range(1, num_feats):
+                dct = td.p_buys[dct_idx]
+                feat_value = training_fvs[idx][dct_idx]
                 try:
-                    dct[featvalue] += 1
+                    dct[feat_value] += 1
                 except KeyError:
-                    dct.setdefault(featvalue, 1)
+                    dct.setdefault(feat_value, 1)
 
-        elif outcomes[idx][1] == 's':  # use td.psells
-            for dctidx in range(1, numfeats):
-                dct = td.psells[dctidx]
-                featvalue = trainingfvs[idx][dctidx]
+        elif outcomes[idx][1] == 's':  # use td.p_sells
+            for dct_idx in range(1, num_feats):
+                dct = td.p_sells[dct_idx]
+                feat_value = training_fvs[idx][dct_idx]
                 try:
-                    dct[featvalue] += 1
+                    dct[feat_value] += 1
                 except KeyError:
-                    dct.setdefault(featvalue, 1)
+                    dct.setdefault(feat_value, 1)
 
-        else:  # use td.pholds
-            for dctidx in range(1, numfeats):
-                dct = td.pholds[dctidx]
-                featvalue = trainingfvs[idx][dctidx]
+        else:  # use td.p_holds
+            for dct_idx in range(1, num_feats):
+                dct = td.p_holds[dct_idx]
+                feat_value = training_fvs[idx][dct_idx]
                 try:
-                    dct[featvalue] += 1
+                    dct[feat_value] += 1
                 except KeyError:
-                    dct.setdefault(featvalue, 1)
+                    dct.setdefault(feat_value, 1)
 
     # for each array in td, replace counts with probabilities
-    oarr = td.pbuys
-    for dictidx in range(numfeats):
-        dct = oarr[dictidx]
+    o_arr = td.p_buys
+    for dict_idx in range(num_feats):
+        dct = o_arr[dict_idx]
         for key in dct:
-            vcount = dct[key]
+            v_count = dct[key]
             # divide total outcome count by the value count
-            dct[key] = vcount / bcount
-    oarr = td.psells
-    for dictidx in range(numfeats):
-        dct = oarr[dictidx]
+            dct[key] = v_count / b_count
+    o_arr = td.p_sells
+    for dict_idx in range(num_feats):
+        dct = o_arr[dict_idx]
         for key in dct:
-            vcount = dct[key]
+            v_count = dct[key]
             # divide total outcome count by the value count
-            dct[key] = vcount / scount
-    oarr = td.pholds
-    for dictidx in range(numfeats):
-        dct = oarr[dictidx]
+            dct[key] = v_count / s_count
+    o_arr = td.p_holds
+    for dict_idx in range(num_feats):
+        dct = o_arr[dict_idx]
         for key in dct:
-            vcount = dct[key]
+            v_count = dct[key]
             # divide total outcome count by the value count
-            dct[key] = vcount / hcount
+            dct[key] = v_count / h_count
 
     return td
 
 
-def classify(fv, td, bprior, sprior, hprior):
-    pbuys = td.pbuys
-    psells = td.psells
-    pholds = td.pholds
+def classify(fv, td, b_prior, s_prior, h_prior):
+    p_buys = td.p_buys
+    p_sells = td.p_sells
+    p_holds = td.p_holds
 
     # smoothing value in case prob is 0
-    smth = 0.001
+    smoothing = 0.001
 
     # calc p(data | result) for each outcome
-    pdb = pholds[1].get(fv[1], smth) * pholds[2].get(fv[2], smth) * pbuys[3].get(fv[3], smth) * pbuys[4].get(fv[4], smth) * pbuys[5].get(fv[5], smth)
-    pds = psells[1].get(fv[1], smth) * psells[2].get(fv[2], smth) * psells[3].get(fv[3], smth) * psells[4].get(fv[4], smth) * psells[5].get(fv[5], smth)
-    pdh = pholds[1].get(fv[1], smth) * pholds[2].get(fv[2], smth) * pholds[3].get(fv[3], smth) * pholds[4].get(fv[4], smth) * pholds[5].get(fv[5], smth)
+    pdb = p_holds[1].get(fv[1], smoothing) * p_holds[2].get(fv[2], smoothing) * p_buys[3].get(fv[3], smoothing) * p_buys[4].get(fv[4], smoothing) * p_buys[5].get(fv[5], smoothing)
+    pds = p_sells[1].get(fv[1], smoothing) * p_sells[2].get(fv[2], smoothing) * p_sells[3].get(fv[3], smoothing) * p_sells[4].get(fv[4], smoothing) * p_sells[5].get(fv[5], smoothing)
+    pdh = p_holds[1].get(fv[1], smoothing) * p_holds[2].get(fv[2], smoothing) * p_holds[3].get(fv[3], smoothing) * p_holds[4].get(fv[4], smoothing) * p_holds[5].get(fv[5], smoothing)
 
     # calc final probabilities
-    pbd = pdb*bprior
-    psd = pds*sprior
-    phd = pdh*hprior
+    pbd = pdb * b_prior
+    psd = pds * s_prior
+    phd = pdh * h_prior
 
     norm = pdb + psd + phd
 

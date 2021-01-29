@@ -111,7 +111,14 @@ def run(settings):
 
     # take the most recent feature and run the model to predict the unknown decision
     lastvector = test_fvs.feature_data[-1]
-    final_prediction = nbayes.classify(lastvector, td, buy_prior, sell_prior, hold_prior)
+    # classify cases
+    if classification_algo == 'Naive Bayes':
+        final_prediction = nbayes.classify(lastvector, td, buy_prior, sell_prior, hold_prior)
+    elif classification_algo == 'Perceptron':
+        final_prediction = perceptron.classify(lastvector, td)
+    else:
+        final_prediction = perceptron.classify(lastvector, td)
+
     print("\nfinal prediction for the unknown (last day)")
     print("    p(buy|data)       |     p(sell|data)    |    p(hold|data)")
     print(str(final_prediction) + "\n")

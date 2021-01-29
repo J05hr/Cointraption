@@ -28,8 +28,8 @@ def formatdata(filename, moving_avg_days, decision_range):
                 # small line length means theres an error
                 if len(line) < 11:
                     raise Exception("number of columns in the csv is too small")
-                rd = (line[0], line[1], line[2], float(line[3]), float(line[4]), float(line[5]), float(line[6]),
-                      float(line[7]), float(line[8]), float(line[9]), float(line[10]))
+                rd = [line[0], line[1], line[2], float(line[3]), float(line[4]), float(line[5]), float(line[6]),
+                      float(line[7]), float(line[8]), float(line[9]), float(line[10])]
                 raw_data.append(rd)
 
         # generate the different data sets by looping through the raw data once
@@ -54,13 +54,13 @@ def formatdata(filename, moving_avg_days, decision_range):
                     f4 += raw_data[idx][4]
                     f5 += raw_data[idx][5]
                     f6 += raw_data[idx][6]
-                avg_data.append((f0, f1, f2, f3 / moving_avg_days, f4 / moving_avg_days, f5 / moving_avg_days,
-                                 f6 / moving_avg_days, f7, f8, f9, f10))
+                avg_data.append([f0, f1, f2, f3 / moving_avg_days, f4 / moving_avg_days, f5 / moving_avg_days,
+                                 f6 / moving_avg_days, f7, f8, f9, f10])
             # early features are left alone
             else:
-                avg_data.append((raw_data[idx][0], raw_data[idx][1], raw_data[idx][2], raw_data[idx][3],
+                avg_data.append([raw_data[idx][0], raw_data[idx][1], raw_data[idx][2], raw_data[idx][3],
                                  raw_data[idx][4], raw_data[idx][5], raw_data[idx][6], raw_data[idx][7],
-                                 raw_data[idx][8], raw_data[idx][9], raw_data[idx][10]))
+                                 raw_data[idx][8], raw_data[idx][9], raw_data[idx][10]])
                 
             # start features after we have enough history to get a percent change
             if idx >= 1:
@@ -76,22 +76,22 @@ def formatdata(filename, moving_avg_days, decision_range):
                 f8 = raw_data[idx][8]
                 f9 = raw_data[idx][9]
                 f10 = raw_data[idx][10]
-                perc_data.append((f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10))
+                perc_data.append([f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10])
                 # using perc_data for now
-                feature_data.append((f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10))
+                feature_data.append([f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10])
 
                 if f6 >= decision_range[1]:
-                    actions.append((raw_data[idx][0], raw_data[idx][1], 'b'))
+                    actions.append([raw_data[idx][0], raw_data[idx][1], 'b'])
                 elif f6 <= decision_range[0]:
-                    actions.append((raw_data[idx][0], raw_data[idx][1], 's'))
+                    actions.append([raw_data[idx][0], raw_data[idx][1], 's'])
                 else:
-                    actions.append((raw_data[idx][0], raw_data[idx][1], 'h'))
+                    actions.append([raw_data[idx][0], raw_data[idx][1], 'h'])
 
             # early features are zeroed out, actions are hold
             else:
-                perc_data.append((raw_data[idx][0], raw_data[idx][1], raw_data[idx][2], 0, 0, 0, 0, 0, 0, 0, 0))
-                feature_data.append((raw_data[idx][0], raw_data[idx][1], raw_data[idx][2], 0, 0, 0, 0, 0, 0, 0, 0))
-                actions.append((raw_data[idx][0], raw_data[idx][1], 'h'))
+                perc_data.append([raw_data[idx][0], raw_data[idx][1], raw_data[idx][2], 0, 0, 0, 0, 0, 0, 0, 0])
+                feature_data.append([raw_data[idx][0], raw_data[idx][1], raw_data[idx][2], 0, 0, 0, 0, 0, 0, 0, 0])
+                actions.append([raw_data[idx][0], raw_data[idx][1], 'h'])
 
     except FileNotFoundError as e:
         print("Failed to open file")
