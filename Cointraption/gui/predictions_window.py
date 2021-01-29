@@ -8,12 +8,12 @@ from Cointraption.objs.settings import Settings
 
 rel_dir = str(Path.cwd())
 base_data_dir = '\\data'
-FormClass, BaseClass = uic.loadUiType(rel_dir + '\\layouts\\manual_classify_window.ui')
+FormClass, BaseClass = uic.loadUiType(rel_dir + '\\layouts\\predictions_window.ui')
 
 
-class ManualCWindow(BaseClass, FormClass):
+class PredictionsWindow(BaseClass, FormClass):
     def __init__(self):
-        super(ManualCWindow, self).__init__()
+        super(PredictionsWindow, self).__init__()
         self.browse_dialog = None
         self.results_dialog = None
         self.data_filename = None
@@ -59,7 +59,7 @@ class ManualCWindow(BaseClass, FormClass):
         self.run_c_button.setText("Running...")
         outcome_range = (-1 * self.sell_below_spin.value(), self.buy_above_spin.value())
         settings = Settings(self.data_filename, self.moving_avg_spin.value(), outcome_range,
-                            self.train_percent_spin.value(), self.c_algo_combo.value())
+                            self.train_percent_spin.value(), self.c_algo_combo.currentText())
         res = run_classfication.run(settings)
         self.results_dialog = results_dialog.ResultsDialog(res)
         self.results_dialog.show()

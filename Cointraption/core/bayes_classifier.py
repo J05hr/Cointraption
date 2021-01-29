@@ -1,10 +1,10 @@
-from Cointraption.objs.training_data import TrainingData
+from Cointraption.objs.bayes_data import BayesData
 
 
 def train(trainingfvs, outcomes, bcount, scount,  hcount):
     # initialize
     numfeats = 6
-    td = TrainingData(numfeats)
+    td = BayesData(numfeats)
 
     # traverse the training outcomes and the training vectors at the same time and record data into td
     for idx in range(len(trainingfvs)):
@@ -61,36 +61,11 @@ def train(trainingfvs, outcomes, bcount, scount,  hcount):
 
     return td
 
-2188507
 
-def getevidence(fv, trainingfvs, traincount):
-    # loop through vectors and get counts for evidence probability
-    # start with a very small count so the probability can't become 0
-    ep1 = 1
-    ep2 = 1
-    ep3 = 1
-    ep4 = 1
-    ep5 = 1
-    for vector in trainingfvs:
-        if vector[1] == fv[1]:
-            ep1 += 1
-        if vector[2] == fv[2]:
-            ep2 += 1
-        if vector[3] == fv[3]:
-            ep3 += 1
-        if vector[4] == fv[4]:
-            ep4 += 1
-        if vector[5] == fv[5]:
-            ep5 += 1
-    ev = (ep1 / traincount) * (ep2 / traincount) * (ep3 / traincount) * (ep4 / traincount) * (ep5 / traincount)
-    return ev
-
-
-def classify(fv, td, ev, bprior, sprior, hprior):
+def classify(fv, td, bprior, sprior, hprior):
     pbuys = td.pbuys
     psells = td.psells
     pholds = td.pholds
-    ev = 1/ev
 
     # smoothing value in case prob is 0
     smth = 0.001

@@ -84,7 +84,7 @@
           <enum>Qt::LeftToRight</enum>
          </property>
          <property name="text">
-          <string>Cointraption Crypto Prediction Application</string>
+          <string>Cointraption Crypto Application</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -119,7 +119,7 @@
         <number>25</number>
        </property>
        <item>
-        <widget class="QPushButton" name="manualCbutton">
+        <widget class="QPushButton" name="predictionsButton">
          <property name="sizePolicy">
           <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
            <horstretch>0</horstretch>
@@ -133,12 +133,12 @@
           </font>
          </property>
          <property name="text">
-          <string>Manual Mode</string>
+          <string>Predictions</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="autoCbutton">
+        <widget class="QPushButton" name="tradesButton">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -158,7 +158,7 @@
           <number>-3</number>
          </property>
          <property name="text">
-          <string>Auto Mode</string>
+          <string>Trading</string>
          </property>
         </widget>
        </item>

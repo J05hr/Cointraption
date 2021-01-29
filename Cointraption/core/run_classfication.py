@@ -1,6 +1,8 @@
 from Cointraption.objs.results import Results
 import Cointraption.core.feature_extractor as featex
 import Cointraption.core.bayes_classifier as nbayes
+import Cointraption.core.perceptron_classifier as perceptron
+from Cointraption.objs.feature_vectors import FeatureVectors
 import math
 
 
@@ -9,56 +11,64 @@ def run(settings):
     moving_avg_days = settings.classification_parameters["moving_avg_days"]
     decision_range = settings.classification_parameters["decision_range"]
     train_percent = settings.classification_parameters["train_percent"]
+    classification_algo = settings.classification_parameters["classification_algo"]
 
     classification_list = []
-    final_prediction = []
     out_dict = {'h': 'hold', 's': 'sell', 'b': 'buy'}
 
     # get feature and outcomes data as a FeatureVectors object
     fvs = featex.formatdata(filename, moving_avg_days, decision_range)
-
-    # get the total number of data points
-    d_count = len(fvs.featurelist)
-
+    d_count = len(fvs.feature_data)  # get the total number of data points
     split_idx = math.ceil(d_count * (train_percent/100))  # calc the split index
     # split the data
-    train_fvs = fvs.featurelist[:split_idx]
-    test_fvs = fvs.featurelist[split_idx:]
-    test_outcomes = fvs.actions[split_idx:]
+    train_fvs = FeatureVectors(fvs.raw_data[:split_idx], fvs.perc_data[:split_idx], fvs.avg_data[:split_idx], fvs.feature_data[:split_idx], fvs.actions[:split_idx])
+    test_fvs = FeatureVectors(fvs.raw_data[split_idx:], fvs.perc_data[split_idx:], fvs.avg_data[split_idx:], fvs.feature_data[split_idx:], fvs.actions[split_idx:])
 
     # figure out some basic training variables
-    traindcnt = len(train_fvs.feature_data)  # num of features
-    bcount = 0
-    scount = 0
-    hcount = 0
-    for outcome in train_fvs.outcomes:
-        if outcome[1] == 'b':
-            bcount += 1
-        elif outcome[1] == 's':
-            scount += 1
+    train_count = len(train_fvs.feature_data)  # num of features
+    buy_count = 0
+    sell_count = 0
+    hold_count = 0
+    for action in train_fvs.actions:
+        if action[2] == 'b':
+            buy_count += 1
+        elif action[2] == 's':
+            sell_count += 1
         else:
-            hcount += 1
-    bprior = bcount / traindcnt
-    sprior = scount / traindcnt
-    hprior = hcount / traindcnt
+            hold_count += 1
+    buy_prior = buy_count / train_count
+    sell_prior = sell_count / train_count
+    hold_prior = hold_count / train_count
 
-    # train model to get a data set for P(data|results) and other probabilities needed for naive bayes
-    td = nbayes.train(train_fvs.featurelist, train_fvs.outcomes, bcount, scount, hcount)
+    # classification training cases
+    if classification_algo == 'Naive Bayes':
+        # train model to get a data set for P(data|results) and other probabilities needed for naive bayes
+        td = nbayes.train(train_fvs.feature_data, train_fvs.actions, buy_count, sell_count, hold_count)
+    elif classification_algo == 'Perceptron':
+        # train perceptron model
+        td = perceptron.train(train_fvs.feature_data, train_fvs.actions)
+    else:
+        # default to perceptron if not sure of the algo
+        td = perceptron.train(train_fvs.feature_data, train_fvs.actions)
 
     # record the accuracy of the classification
-    correctcnt = 0
-    monin = 0
-    monout = 0
-    buyin = 0
-    control = 0
+    correct_count = 0
+    money_in = 0
+    money_out = 0
+    buy_in = 0
 
     # loop through the testing data and do classification
-    for fvidx in range(len(test_fvs.featurelist)-2):
+    for fvidx in range(len(test_fvs.feature_data) - 2):
         cresults = []
-        featurevector = test_fvs.featurelist[fvidx]
-        # get evidence probability for this vector
-        ev = nbayes.getevidence(featurevector, train_fvs.featurelist, traindcnt)
-        res = nbayes.classify(featurevector, td, ev, bprior, sprior, hprior)
+        featurevector = test_fvs.feature_data[fvidx]
+        # classify cases
+        if classification_algo == 'Naive Bayes':
+            res = nbayes.classify(featurevector, td, buy_prior, sell_prior, hold_prior)
+        elif classification_algo == 'Perceptron':
+            res = perceptron.classify(featurevector, td)
+        else:
+            res = perceptron.classify(featurevector, td)
+
         # print the results
         print(featurevector[0])
         print("    p(buy|data)       |     p(sell|data)    |    p(hold|data)")
@@ -69,49 +79,48 @@ def run(settings):
         # figure out the predicted outcome
         if res.index(max(res)) == 0:
             pout = 'buy'
-            monin += 100
-            buyin += 100
+            money_in += 100
+            buy_in += 100
         elif res.index(max(res)) == 1:
             pout = 'sell'
-            if monin > 100:
-                monin -= 100
-                monout += 100
+            if money_in > 100:
+                money_in -= 100
+                money_out += 100
         else:
             pout = 'hold'
         # check if the test prediction was accurate and print
         testString = ""
-        if out_dict[test_fvs.outcomes[fvidx][1]] == pout:
-            correctcnt += 1
-            testString = "Correct | Outcome: " + out_dict[test_fvs.outcomes[fvidx][1]] + " | Prediction: " + pout
+        if out_dict[test_fvs.actions[fvidx][2]] == pout:
+            correct_count += 1
+            testString = "Correct | Outcome: " + out_dict[test_fvs.actions[fvidx][2]] + " | Prediction: " + pout
         else:
-            testString = "Incorrect | Outcome: " + out_dict[test_fvs.outcomes[fvidx][1]] + " | Prediction: " + pout
+            testString = "Incorrect | Outcome: " + out_dict[test_fvs.actions[fvidx][2]] + " | Prediction: " + pout
         print(testString)
         cresults.append(testString)
-        percnextdayclose = test_fvs.perclist[fvidx+1][4]
-        nextdayprofit = monin * (percnextdayclose/100)
-        monin += nextdayprofit
+        percnextdayclose = test_fvs.perc_data[fvidx + 1][6]
+        nextdayprofit = money_in * (percnextdayclose / 100)
+        money_in += nextdayprofit
         classification_list.append(cresults)
 
     # print the accuracy of the classification at the end of testing
-    accur = (correctcnt / (len(test_fvs.featurelist)-1)) * 100
-    profit = monin + monout - buyin
+    accur = (correct_count / (len(test_fvs.feature_data) - 1)) * 100
+    profit = money_in + money_out - buy_in
     print("total prediction accuracy is: " + str(accur) + "%")
-    print("money in: $" + str(monin) + ", money out: $" + str(monout))
-    print("total buy in: $" + str(buyin) + ", profit: $" + str(profit))
+    print("money in: $" + str(money_in) + ", money out: $" + str(money_out))
+    print("total buy in: $" + str(buy_in) + ", profit: $" + str(profit))
 
     # take the most recent feature and run the model to predict the unknown decision
-    lastvector = test_fvs.featurelist[-1]
-    ev = nbayes.getevidence(lastvector, train_fvs.featurelist, traindcnt)
-    final_prediction = nbayes.classify(lastvector, td, ev, bprior, sprior, hprior)
+    lastvector = test_fvs.feature_data[-1]
+    final_prediction = nbayes.classify(lastvector, td, buy_prior, sell_prior, hold_prior)
     print("\nfinal prediction for the unknown (last day)")
     print("    p(buy|data)       |     p(sell|data)    |    p(hold|data)")
     print(str(final_prediction) + "\n")
 
     # control is holding the full buy-in for the entire training range.
-    first = test_fvs.rawlist[0][4]
-    last = test_fvs.rawlist[-3][4]
-    control = buyin * (last / first)
+    first = test_fvs.raw_data[0][6]
+    last = test_fvs.raw_data[-3][6]
+    control = buy_in * (last / first)
     profitOverControl = profit - control
 
-    return Results(decision_range, train_percent, moving_avg_days, accur, profit, buyin, profitOverControl,
+    return Results(decision_range, train_percent, moving_avg_days, accur, profit, buy_in, profitOverControl,
                    classification_list, final_prediction)

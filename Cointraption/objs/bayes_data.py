@@ -1,6 +1,6 @@
 
 
-class TrainingData:
+class BayesData:
     def __init__(self, numfeat):
         # each item is an array of feature dictionaries
         # keys correspond to feature values and values correspond to probabilities
@@ -12,3 +12,5 @@ class TrainingData:
             self.pbuys.append(dict())
             self.psells.append(dict())
             self.pholds.append(dict())
+
+
